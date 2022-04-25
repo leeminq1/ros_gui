@@ -10,15 +10,9 @@
 <!-- roslib -->
 <script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.3/nipplejs.js"></script>
-<script type="text/javascript" src="roslisb.js"></script>
+
 </head>
 
-<script type="text/javascript" type="text/javascript">
-  /**
-      * Setup all visualization elements when the page is loaded.
-      */
-
-</script>
 
 <body>
   <h1>Simple ROS User Interface</h1>
@@ -26,6 +20,13 @@
   <p>Last /txt_msg received: <span id="msg"></span></p>
   <div id="zone_joystick" style="width:200px; height: 200px;display: flex;justify-content: center;align-items: center;"></div>
   <div id="map"></div>
+  <div id="alerts">
+  </div>
+  <div class="joystick-container">
+      <div id="joystick"></div>
+  </div>
+  <script type="text/javascript" src="./script/roslisb.js"></script>
+  <script type="text/javascript" src="./script/joystick.js"></script>
 </body>
 
 </html>

@@ -1,6 +1,6 @@
 var ros = new ROSLIB.Ros({
-    // url : 'ws://localhost:9090'
-    url : 'ws://192.168.202.26:9090'
+    url : 'ws://localhost:9090'
+    // url : 'ws://192.168.202.26:9090'
   });
 
   ros.on('connection', function() {
@@ -70,47 +70,7 @@ TxtSend.subscribe(function(message) {
 
  
 
-const  createJoystick = function () {
-      var options = {
-        zone: document.getElementById('zone_joystick'),
-        threshold: 0.1,
-        position: { left: 50 + '%' },
-        mode: 'static',
-        size: 150,
-        color: '#000000',
-      };
 
-      manager = nipplejs.create(options);
-      linear_speed = 0;
-      angular_speed = 0;
-
-      manager.on('start', function (event, nipple) {
-        // console.log("Movement start");
-        timer = setInterval(function () {
-            move(linear_speed, angular_speed);
-            
-            }, 25);
-      });
-
-      manager.on('move', function (event, nipple) {
-        // console.log("Moving");
-        max_linear = 5.0; // m/s
-        max_angular = 2.0; // rad/s
-        max_distance = 75.0; // pixels;
-        linear_speed = Math.sin(nipple.angle.radian) * max_linear * nipple.distance/max_distance;
-        angular_speed = -Math.cos(nipple.angle.radian) * max_angular * nipple.distance/max_distance;
-    });
-
-      manager.on('end', function () {
-        // console.log("Movement end");
-        if (timer) {
-            clearInterval(timer);
-            }
-            move(0, 0);
-      });
-
-
-    }
 
 
 function mapLoad() {
@@ -126,6 +86,7 @@ function mapLoad() {
   var gridClient = new ROS2D.OccupancyGridClient({
     ros : ros,
     rootObject : viewer.scene,
+    image: 'turtlebot.png',
     continuous: true
   });
 
@@ -177,23 +138,19 @@ const createFunc = function (handlerToCall, discriminator, robotMarker) {
   createFunc('subscribe', poseTopic, robotMarker);
   
 
-
-
-
   // Scale the canvas to fit to the map
   gridClient.on('change', function(){
     viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
     viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
   });
-  console.log("mapload")
+  
 }
 
+// window.onload는 최종에 있는거 한번만 실행됨
+window.addEventListener('onload', 
+  console.log("mapload"),
+  mapLoad()
+)
 
 
-
-
-window.onload = function () {
-  createJoystick();
-  mapLoad();
-}
 
