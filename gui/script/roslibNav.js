@@ -32,54 +32,6 @@ var moveBaseFB = new ROSLIB.Topic ({
   messageType : 'move_base_msgs/MoveBaseActionFeedback'
   });
 
-  // Publishing Topic
-//  const cmdVel = new ROSLIB.Topic({
-//     ros : ros,
-//     name : "/turtle1/cmd_vel",
-//     messageType : 'geometry_msgs/Twist'
-//   });
-
-
-// const TxtSend = new ROSLIB.Topic({
-//     ros : ros,
-//     name : '/txtsend',
-//     messageType : 'std_msgs/String'
-// });
-
-
-
-// const move = function (linear, angular) {
-//     // Twist msg
-//     var twist = new ROSLIB.Message({
-//       linear: {
-//         x: linear,
-//         y: 0,
-//         z: 0
-//       },
-//       angular: {
-//         x: 0,
-//         y: 0,
-//         z: angular
-//       }
-//     });
-
-//     //string msg
-//     let txt=new ROSLIB.Message({
-//         data:`Lindear Velocitiy : ${linear.toFixed(2)} , Angular Velocity : ${angular.toFixed(2)}`
-//     })
-
-
-//     cmdVel.publish(twist);
-//     TxtSend.publish(txt);
-    
-//   }
-
-
-// Subscriber Topic 
-// TxtSend.subscribe(function(message) {
-//     document.getElementById("msg").innerHTML = `${message.data}`;
-//     // listener.unsubscribe();
-// });
 
 
 
@@ -88,17 +40,6 @@ var moveBaseFB = new ROSLIB.Topic ({
 function mapLoad() {
   // conf
   let OperRatingMode="nav"
-
-
-//  const CreatePathPlanTopic=()=>{
-//     let listenerforPath = new ROSLIB.Topic ({
-//       ros :ros,
-//       name : '/move_base/NavfnROS/plan',
-//       messageType : 'nav_msgs/Path'
-//       });
-//  }
-
-
 
 
   const CreatePoseTopic=(OperRatingMode)=>{
@@ -148,29 +89,14 @@ function mapLoad() {
     continuous: true
   });
 
-  // Setup the robot pose
-//   var robotMarker = new NAVIGATION2D.PoseAndTrace({
-//     size : 0.25,
-//     strokeSize : 0.05,
-//     pulse: true,
-//     fillColor: createjs.Graphics.getRGB(255,0,0, 0.9)
-// });
 
 // robot odometry
-var robotMarker = new ROS2D.ArrowShape({
-  size : 0.7,
-  strokeSize : 0.01,
+var robotMarker = new ROS2D.NavigationArrow({
+  size : 0.25,
+  strokeSize : 0.05,
   pulse: true,
-  fillColor: createjs.Graphics.getRGB(255,0,0, 0.9),
+  fillColor: createjs.Graphics.getRGB(255,0,0, 0.9)
 });
-
-// var robotMarkerArrow=new ROS2D.ArrowShape({
-//   size : 0.5,
-//   strokeSize : 0.01,
-//   pulse: true,
-//   fillColor: createjs.Graphics.getRGB(0,0,255, 0.9),
-// })
-
 
 // pathShape 
 var pathShape = new ROS2D.PathShape({
@@ -187,11 +113,6 @@ var pathShape = new ROS2D.PathShape({
     // listenerforPath.unsubscribe();
   });
   
-  // var gotoClient = new ROSLIB.ActionClient({
-  //   ros : ros,
-  //   serverName : '/goto_position',
-  //   actionName : '/GotoPositionAction'
-  // });
 
   //Draw actual trace
   var traceShape = new ROS2D.TraceShape({
@@ -207,75 +128,6 @@ var pathShape = new ROS2D.PathShape({
       //arrowShape.setPose(message.feedback.base_position.pose);
       //listener.unsubscribe();
     });
-
-
-
-// polygon
-// Callback functions when there is mouse interaction with the polygon
-// var clickedPolygon = false;
-// var selectedPointIndex = null;
-
-// var pointCallBack = function(type, event, index) {
-//   if (type === 'mousedown') {
-//     if (event.nativeEvent.shiftKey === true) {
-//       polygon.remPoint(index);
-//     }
-//     else {
-//       selectedPointIndex = index;
-//     }
-//   }
-//   clickedPolygon = true;
-// };
-
-// var lineCallBack = function(type, event, index) {
-//   if (type === 'mousedown') {
-//     if (event.nativeEvent.ctrlKey === true) {
-//       polygon.splitLine(index);
-//     }
-//   }
-//   clickedPolygon = true;
-// }
-
-// // Create the polygon
-// var polygon = new ROS2D.PolygonMarker({
-//   lineColor : createjs.Graphics.getRGB(100, 100, 255,0),
-//   pointCallBack : pointCallBack,
-//   // lineCallBack : lineCallBack,
-//   lineSize : 0.2,
-//   pointSize : 0.5
-// });
-
-// // Add the polygon to the viewer
-// console.log(polygon);
-// gridClient.rootObject.addChild(polygon);
-
-// // Event listeners for mouse interaction with the stage
-// viewer.scene.mouseMoveOutside = false; // doesn't seem to work
-
-// viewer.scene.addEventListener('stagemousemove', function(event) {
-//   // Move point when it's dragged
-//   if (selectedPointIndex !== null) {
-//     var pos = viewer.scene.globalToRos(event.stageX, event.stageY);
-//     polygon.movePoint(selectedPointIndex, pos);
-//   }
-// });
-
-// viewer.scene.addEventListener('stagemouseup', function(event) {
-//   // Add point when not clicked on the polygon
-//   if (selectedPointIndex !== null) {
-//     selectedPointIndex = null;
-//   }
-//   else if (viewer.scene.mouseInBounds === true && clickedPolygon === false) {
-//     var pos = viewer.scene.globalToRos(event.stageX, event.stageY);
-//     var pospix = {'x' : event.stageX, 'y' : Math.ceil(event.stageY)}; //Why is Y float | ceil is not for truncating!          
-//     polygon.remPoint(0);
-//     polygon.addPoint(pos);//SLOW just draw points
-//     console.log(pospix);
-//     document.getElementById("x").innerHTML = (pos.x).toFixed(2);
-//     document.getElementById("y").innerHTML = (pos.y).toFixed(2);
-//   }
-//   clickedPolygon = false;
-// });
 
 
 // create initial Pose Topic and msg
@@ -304,7 +156,7 @@ const creatInitialPose=(pose_x,pose_y)=>{
       orientation: {
         x : 0.0,
         y : 0.0,
-        z : 0.035,
+        z : -0.035,
         w : 0.9993
       }
      }
@@ -349,40 +201,152 @@ const creatGoalPose=(pose_x,pose_y)=>{
     console.log("initialPose publish")
 }
 
+var actionClient = new ROSLIB.ActionClient({
+    ros : ros,
+    actionName : 'move_base_msgs/MoveBaseAction',
+    serverName : 'move_base'
+  });
 
+function sendGoal(pose) {
+    // create a goal
+    var goal = new ROSLIB.Goal({
+      actionClient : actionClient,
+      goalMessage : {
+        target_pose : {
+          header : {
+            frame_id : '/map'
+          },
+          pose : pose
+        }
+      }
+    });
+    goal.send();
+
+    // create a marker for the goal
+    var goalMarker = new ROS2D.NavigationArrow({
+      size : 10,
+      strokeSize : 1,
+      fillColor : createjs.Graphics.getRGB(255, 64, 128, 0.66),
+      pulse : true
+    });
+    goalMarker.x = pose.position.x;
+    goalMarker.y = -pose.position.y;
+    goalMarker.rotation = stage.rosQuaternionToGlobalTheta(pose.orientation);
+    goalMarker.scaleX = 1.0 / stage.scaleX;
+    goalMarker.scaleY = 1.0 / stage.scaleY;
+    gridClient.rootObject.addChild(goalMarker);
+
+    goal.on('result', function() {
+        gridClient.rootObject.removeChild(goalMarker);
+    });
+  }
+
+  // get a handle to the stage
+  var stage;
+  if (gridClient.rootObject instanceof createjs.Stage) {
+    stage = gridClient.rootObject;
+  } else {
+    stage = gridClient.rootObject.getStage();
+  }
+
+
+
+
+var mouseEventHandler = function(event, mouseState) {
+
+    if (mouseState === 'down'){
+      console.log("mouse down")
+      // get position when mouse button is pressed down
+      position = viewer.scene.globalToRos(event.stageX, event.stageY);
+      positionVec3 = new ROSLIB.Vector3(position);
+      mouseDown = true;
+    }
+    else if (mouseState === 'move'){
+       console.log("mouse move")
+      // remove obsolete orientation marker
+      gridClient.rootObject.removeChild(robotMarker);
+      
+      if ( mouseDown === true) {
+        // if mouse button is held down:
+        // - get current mouse position
+        // - calulate direction between stored <position> and current position
+        // - place orientation marker
+        var currentPos = viewer.scene.globalToRos(event.stageX, event.stageY);
+        var currentPosVec3 = new ROSLIB.Vector3(currentPos);
+
+
+        xDelta =  currentPosVec3.x - positionVec3.x;
+        yDelta =  currentPosVec3.y - positionVec3.y;
+        
+        thetaRadians  = Math.atan2(xDelta,yDelta);
+
+        thetaDegrees = thetaRadians * (180.0 / Math.PI);
+        
+        if (thetaDegrees >= 0 && thetaDegrees <= 180) {
+          thetaDegrees += 270;
+        } else {
+          thetaDegrees -= 90;
+        }
+
+        robotMarker.x =  positionVec3.x;
+        robotMarker.y = -positionVec3.y;
+        robotMarker.rotation = thetaDegrees;
+        robotMarker.scaleX = 1.0 / viewer.scene.scaleX;
+        robotMarker.scaleY = 1.0 / viewer.scene.scaleY;
+        
+        gridClient.rootObject.addChild(robotMarker);
+      }
+    } else if (mouseDown) { // mouseState === 'up'
+      // if mouse button is released
+      // - get current mouse position (goalPos)
+      // - calulate direction between stored <position> and goal position
+      // - set pose with orientation
+      // - send goal
+      console.log("mouse down true")
+      mouseDown = false;
+
+      var goalPos =viewer.scene.globalToRos(event.stageX, event.stageY);
+
+      var goalPosVec3 = new ROSLIB.Vector3(goalPos);
+      
+      xDelta =  goalPosVec3.x - positionVec3.x;
+      yDelta =  goalPosVec3.y - positionVec3.y;
+      
+      thetaRadians  = Math.atan2(xDelta,yDelta);
+      
+      if (thetaRadians >= 0 && thetaRadians <= Math.PI) {
+        thetaRadians += (3 * Math.PI / 2);
+      } else {
+        thetaRadians -= (Math.PI/2);
+      }
+      
+      var qz =  Math.sin(-thetaRadians/2.0);
+      var qw =  Math.cos(-thetaRadians/2.0);
+      
+      var orientation = new ROSLIB.Quaternion({x:0, y:0, z:qz, w:qw});
+      
+      var pose = new ROSLIB.Pose({
+        position :    positionVec3,
+        orientation : orientation
+      });
+ 
+      sendGoal(pose);
+    }
+  };
 
 
 
 //map mouse click event to set pose 
-viewer.scene.addEventListener('mousedown', function(event) {
-  let initialPoseChecked = document.querySelector("#initialPoseswitch").checked
-  let goalPoseChecked = document.querySelector("#goalPoseswitch").checked
-  if(initialPoseChecked){
-    document.querySelector("#goalPoseswitch").checked = false;
-    console.log("initalPose work")
-    var pos = viewer.scene.globalToRos(event.stageX, event.stageY);
-    var pose_x=pos.x
-    var pose_y=pos.y
-    var currentPosVec3 = new ROSLIB.Vector3(pos);
-    const pose = new ROSLIB.Pose({
-      position: new ROSLIB.Vector3(pos)
-    });
-  
-    console.log(`initial_pose_x : ${pose_x} , initial_pose_y : ${pose_y} , vec3 : `)
-    console.log(currentPosVec3)
-    creatInitialPose(pose_x,pose_y)
-  }
-  if(goalPoseChecked){
-    document.querySelector("#initialPoseswitch").checked =false;
-    console.log("goalPoseChecked work")
-    var pos = viewer.scene.globalToRos(event.stageX, event.stageY);
-    var pose_x=pos.x
-    var pose_y=pos.y
-    console.log(`goal_pose_x : ${pose_x} , goal_pose_y : ${pose_y}`)
-    creatGoalPose(pose_x,pose_y)
+viewer.scene.addEventListener('stagemousedown', function(event) {
+    mouseEventHandler(event,'down');
+});
 
-  }
+viewer.scene.addEventListener('stagemousedown', function(event) {
+    mouseEventHandler(event,'move');
+});
 
+viewer.scene.addEventListener('stagemousedown', function(event) {
+    mouseEventHandler(event,'up');
 });
 
 
