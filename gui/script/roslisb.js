@@ -279,7 +279,7 @@ var pathShape = new ROS2D.PathShape({
 
 
 // create initial Pose Topic and msg
-const creatInitialPose=(pose_x,pose_y)=>{
+const creatInitialPose=(pose_x,pose_y,orientation)=>{
   const initialPose = new ROSLIB.Topic({
     ros: ros,
     name: '/initialpose',
@@ -301,12 +301,7 @@ const creatInitialPose=(pose_x,pose_y)=>{
         y : pose_y,
         z : 0.0
       },
-      orientation: {
-        x : 0.0,
-        y : 0.0,
-        z : 0.035,
-        w : 0.9993
-      }
+      orientation: orientation
      }
       ,
       covariance: [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06853892326654787]
@@ -316,8 +311,8 @@ const creatInitialPose=(pose_x,pose_y)=>{
     console.log("initialPose publish")
 }
 // create Goal Pose Topic and msg
-const creatGoalPose=(pose_x,pose_y)=>{
-  const initialPose = new ROSLIB.Topic({
+const creatGoalPose=(pose_x,pose_y,orientation)=>{
+  const goalPose = new ROSLIB.Topic({
     ros: ros,
     name: '/move_base_simple/goal',
     messageType: 'geometry_msgs/PoseStamped'
@@ -337,54 +332,129 @@ const creatGoalPose=(pose_x,pose_y)=>{
         y : pose_y,
         z : 0.0
       },
-      orientation: {
-        x : 0.0,
-        y : 0.0,
-        z : -0.035,
-        w : 0.9993
-      }
+      orientation: orientation
      }
   });
-   initialPose.publish(posestamped_msg)
-    console.log("initialPose publish")
+    goalPose.publish(posestamped_msg)
+    console.log("goalPose publish")
 }
 
 
+// to set MouseMoevEvent after mouseDown event , 
+let mouseDown=false
+let mouseDownPose={}
+
+// why MouseState set to up  
+var mouseEventHandler = function(event, mouseState,operMode) {
+   console.log(`mouseState :${mouseState}`)
+  if (mouseState === 'down'){
+    mouseDown=true
+    console.log("mouse down")
+    // get position when mouse button is pressed down
+    mouseDownPosition = viewer.scene.globalToRos(event.stageX, event.stageY);
+    mouseDownPositionVec3 = new ROSLIB.Vector3(mouseDownPosition);
+    mouseDownPose = new ROSLIB.Pose({
+      position: new ROSLIB.Vector3(mouseDownPositionVec3)
+    });
+    console.log(mouseDownPose.position)
+  }
+  else if (mouseState === 'move' && mouseDown){
+    console.log("mouse move")
+    // // remove obsolete orientation marker
+    gridClient.rootObject.removeChild(robotMarker);
+  }
+  else if (mouseState === 'up'&& mouseDown){
+    mouseDown=false
+    mouseUpPosition = viewer.scene.globalToRos(event.stageX, event.stageY);
+    mouseUpPositionVec3 = new ROSLIB.Vector3(mouseUpPosition);
+    const mouseUpPose = new ROSLIB.Pose({
+      position: new ROSLIB.Vector3(mouseUpPositionVec3)
+    });
+
+    // upPose - DownPose
+    xDelta =  mouseUpPose.position.x - mouseDownPose.position.x ;
+    yDelta =  mouseUpPose.position.y - mouseDownPose.position.y;
+
+    thetaRadians  = Math.atan2(xDelta,yDelta);
+
+    thetaDegrees = thetaRadians * (180.0 / Math.PI);
+          
+    if (thetaRadians >= 0 && thetaRadians <= Math.PI) {
+      thetaRadians += (3 * Math.PI / 2);
+    } else {
+      thetaRadians -= (Math.PI/2);
+    }
+
+    var qz =  Math.sin(-thetaRadians/2.0);
+    var qw =  Math.cos(-thetaRadians/2.0);
+    // degree convert to quaternion
+    var orientation = new ROSLIB.Quaternion({x:0, y:0, z:qz, w:qw});
+
+    // console.log(`xDelta : ${xDelta}, yDelta : ${yDelta} , degree : ${thetaDegrees}`)
+
+    // set robotmaker
+    if(operMode=="initial"){
+      creatInitialPose(mouseDownPose.position.x,mouseDownPose.position.y,orientation)
+    }else if (operMode=="goal")
+      creatGoalPose(mouseDownPose.position.x,mouseDownPose.position.y,orientation)
+  }};
 
 
 
-//map mouse click event to set pose 
-viewer.scene.addEventListener('mousedown', function(event) {
+
+
+
+viewer.scene.addEventListener('stagemousedown', function(event) {
   let initialPoseChecked = document.querySelector("#initialPoseswitch").checked
   let goalPoseChecked = document.querySelector("#goalPoseswitch").checked
+  // set Btn control
+  let operMode=initialPoseChecked?"initial":"goal"
+  // button to set inital pose
   if(initialPoseChecked){
-    document.querySelector("#goalPoseswitch").checked = false;
-    console.log("initalPose work")
-    var pos = viewer.scene.globalToRos(event.stageX, event.stageY);
-    var pose_x=pos.x
-    var pose_y=pos.y
-    var currentPosVec3 = new ROSLIB.Vector3(pos);
-    const pose = new ROSLIB.Pose({
-      position: new ROSLIB.Vector3(pos)
-    });
-  
-    console.log(`initial_pose_x : ${pose_x} , initial_pose_y : ${pose_y} , vec3 : `)
-    console.log(currentPosVec3)
-    creatInitialPose(pose_x,pose_y)
+    document.querySelector("#goalPoseswitch").checked=false
+    mouseEventHandler(event,'down',operMode);
   }
-  if(goalPoseChecked){
-    document.querySelector("#initialPoseswitch").checked =false;
-    console.log("goalPoseChecked work")
-    var pos = viewer.scene.globalToRos(event.stageX, event.stageY);
-    var pose_x=pos.x
-    var pose_y=pos.y
-    console.log(`goal_pose_x : ${pose_x} , goal_pose_y : ${pose_y}`)
-    creatGoalPose(pose_x,pose_y)
 
+  if(goalPoseChecked){
+    document.querySelector("#initialPoseswitch").checked=false
+    mouseEventHandler(event,'down',operMode);
   }
 
 });
 
+viewer.scene.addEventListener('stagemousemove', function(event) {
+  let initialPoseChecked = document.querySelector("#initialPoseswitch").checked
+  let goalPoseChecked = document.querySelector("#goalPoseswitch").checked
+  let operMode=initialPoseChecked?"initial":"goal"
+  // button to set inital pose
+  if(initialPoseChecked){
+    document.querySelector("#goalPoseswitch").checked=false
+    mouseEventHandler(event,'move',operMode);
+  }
+
+  if(goalPoseChecked){
+    document.querySelector("#initialPoseswitch").checked=false
+    mouseEventHandler(event,'move',operMode);
+  }
+  
+});
+
+viewer.scene.addEventListener('stagemouseup', function(event) {
+  let initialPoseChecked = document.querySelector("#initialPoseswitch").checked
+  let goalPoseChecked = document.querySelector("#goalPoseswitch").checked
+  let operMode=initialPoseChecked?"initial":"goal"
+  // button to set inital pose
+  if(initialPoseChecked){
+    document.querySelector("#goalPoseswitch").checked=false
+    mouseEventHandler(event,'up',operMode);
+  }
+
+  if(goalPoseChecked){
+    document.querySelector("#initialPoseswitch").checked=false
+    mouseEventHandler(event,'up',operMode);
+  }
+  
+});
 
 
 const createFunc = function (handlerToCall, discriminator, robotMarker,OperRatingMode) {
@@ -421,15 +491,21 @@ const createFunc = function (handlerToCall, discriminator, robotMarker,OperRatin
       console.log("nav work")
       robotMarker.x = pose.pose.pose.position.x;
       robotMarker.y = -pose.pose.pose.position.y;
-      let quaZ = pose.pose.pose.orientation.z;
-      let degreeZ = 0;
-      if( quaZ >= 0 ) {
-          degreeZ = quaZ / 1 * 180
-      } else {
-          degreeZ = (-quaZ) / 1 * 180 + 180
-      };
-      
-      robotMarker.rotation = -degreeZ;
+      // querternion to theta
+      // let quaZ = pose.pose.pose.orientation.z;
+      // let degreeZ = 0;
+      // if( quaZ >= 0 ) {
+      //     degreeZ = quaZ / 1 * 180
+      // } else {
+      //     degreeZ = (-quaZ) / 1 * 180 + 180
+      // };
+      let orientationQuerter=pose.pose.pose.orientation
+      var q0 = orientationQuerter.w;
+      var q1 = orientationQuerter.x;
+      var q2 = orientationQuerter.y;
+      var q3 = orientationQuerter.z;
+      degree=-Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - 2 * (q2 * q2 + q3 * q3)) * 180.0 / Math.PI
+      robotMarker.rotation = degree;
       }
 
       // turtlesim
