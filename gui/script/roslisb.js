@@ -2,7 +2,6 @@
 
 var ros = new ROSLIB.Ros({
     url : 'ws://localhost:9090'
-    //url : 'ws://192.168.204.98:9090'
   });
 
   ros.on('connection', function() {
@@ -16,6 +15,8 @@ var ros = new ROSLIB.Ros({
   ros.on('close', function() {
     document.getElementById("status").innerHTML = "Closed";
   });
+
+
 
 
   // pathShape
@@ -32,74 +33,103 @@ var moveBaseFB = new ROSLIB.Topic ({
   messageType : 'move_base_msgs/MoveBaseActionFeedback'
   });
 
-  // Publishing Topic
-//  const cmdVel = new ROSLIB.Topic({
-//     ros : ros,
-//     name : "/turtle1/cmd_vel",
-//     messageType : 'geometry_msgs/Twist'
-//   });
-
-
-// const TxtSend = new ROSLIB.Topic({
-//     ros : ros,
-//     name : '/txtsend',
-//     messageType : 'std_msgs/String'
-// });
-
-
-
-// const move = function (linear, angular) {
-//     // Twist msg
-//     var twist = new ROSLIB.Message({
-//       linear: {
-//         x: linear,
-//         y: 0,
-//         z: 0
-//       },
-//       angular: {
-//         x: 0,
-//         y: 0,
-//         z: angular
-//       }
-//     });
-
-//     //string msg
-//     let txt=new ROSLIB.Message({
-//         data:`Lindear Velocitiy : ${linear.toFixed(2)} , Angular Velocity : ${angular.toFixed(2)}`
-//     })
-
-
-//     cmdVel.publish(twist);
-//     TxtSend.publish(txt);
-    
-//   }
-
-
-// Subscriber Topic 
-// TxtSend.subscribe(function(message) {
-//     document.getElementById("msg").innerHTML = `${message.data}`;
-//     // listener.unsubscribe();
-// });
-
-
-
 
 
 function mapLoad() {
+  // srv array
+  let received_topic_list=[]
+  let received_node_list=[]
+
+  /////////////////////////////// Get Publisher list
+  const getNodes=()=>{
+    var NodeClient = new ROSLIB.Service({
+    ros : ros,
+    name : '/rosapi/nodes',
+    serviceType : 'rosapi/nodes'
+    });
+
+    var request = new ROSLIB.ServiceRequest();
+
+    NodeClient.callService(request, function(result) {
+    console.log("Getting nodes...");
+    // reulst shape 
+    // string[] publishers
+    // http://docs.ros.org/en/melodic/api/rosapi/html/srv/Publishers.html
+    received_node_list.push(result)
+    });
+
+    return received_node_list
+};
+
+  let nodeList=getNodes();
+
+    //set the topic list
+    const setPubList=(nodeList)=>{
+
+      for (let i=0;i<nodeList.nodes.length;i++){
+        let node=nodeList.nodes[i]
+    
+        document.getElementById("node_list_length").innerHTML=`${nodeList.nodes.length} Nodes`
+        let list = document.getElementById("node_list");
+        let listCoponent = document.createElement('h1');
+        listCoponent.innerHTML=`Node : ${node}`
+        list.appendChild(listCoponent)
+        
+      }
+    
+    }
+
+  
+  ////////////////////////// Get Topic list
+  const getTopics=()=>{
+    var topicsClient = new ROSLIB.Service({
+    ros : ros,
+    name : '/rosapi/topics',
+    serviceType : 'rosapi/Topics'
+    });
+
+    var request = new ROSLIB.ServiceRequest();
+
+    topicsClient.callService(request, function(result) {
+    console.log("Getting topics...");
+
+    // reulst shape 
+    // string[] topics / string[] types
+    // http://docs.ros.org/en/melodic/api/rosapi/html/srv/Topics.html
+    received_topic_list.push(result)
+    });
+
+    return received_topic_list
+};
+  // get srv msg
+  let topic_list=getTopics();
+
+  //set the topic list
+  const setTopicList=(topiclist)=>{
+
+  for (let i=0;i<topiclist.topics.length;i++){
+    let topic=topiclist.topics[i]
+    let type=topiclist.types[i]
+
+    document.getElementById("topic_list_length").innerHTML=`${topiclist.topics.length} topics`
+    let list = document.getElementById("topic_list");
+    let listCoponent = document.createElement('h1');
+    listCoponent.innerHTML=`Topic : ${topic}  ,   Type : ${type}`
+    list.appendChild(listCoponent)
+    
+  }
+
+}
+
+setTimeout(()=>{
+
+    setTopicList(topic_list[0])
+    setPubList(nodeList[0])
+
+},2000)
+
   // conf
   let OperRatingMode="nav"
-
-
-//  const CreatePathPlanTopic=()=>{
-//     let listenerforPath = new ROSLIB.Topic ({
-//       ros :ros,
-//       name : '/move_base/NavfnROS/plan',
-//       messageType : 'nav_msgs/Path'
-//       });
-//  }
-
-
-
 
   const CreatePoseTopic=(OperRatingMode)=>{
 
@@ -148,14 +178,6 @@ function mapLoad() {
     continuous: true
   });
 
-  // Setup the robot pose
-//   var robotMarker = new NAVIGATION2D.PoseAndTrace({
-//     size : 0.25,
-//     strokeSize : 0.05,
-//     pulse: true,
-//     fillColor: createjs.Graphics.getRGB(255,0,0, 0.9)
-// });
-
 // robot odometry
 var robotMarker = new ROS2D.ArrowShape({
   size : 0.7,
@@ -163,13 +185,6 @@ var robotMarker = new ROS2D.ArrowShape({
   pulse: true,
   fillColor: createjs.Graphics.getRGB(255,0,0, 0.9),
 });
-
-// var robotMarkerArrow=new ROS2D.ArrowShape({
-//   size : 0.5,
-//   strokeSize : 0.01,
-//   pulse: true,
-//   fillColor: createjs.Graphics.getRGB(0,0,255, 0.9),
-// })
 
 
 // pathShape 
@@ -187,12 +202,6 @@ var pathShape = new ROS2D.PathShape({
     // listenerforPath.unsubscribe();
   });
   
-  // var gotoClient = new ROSLIB.ActionClient({
-  //   ros : ros,
-  //   serverName : '/goto_position',
-  //   actionName : '/GotoPositionAction'
-  // });
-
   //Draw actual trace
   var traceShape = new ROS2D.TraceShape({
       strokeSize : 0.1,
@@ -204,78 +213,7 @@ var pathShape = new ROS2D.PathShape({
     //update on new message
   moveBaseFB.subscribe(function(message) {
       traceShape.addPose(message.feedback.base_position.pose);
-      //arrowShape.setPose(message.feedback.base_position.pose);
-      //listener.unsubscribe();
     });
-
-
-
-// polygon
-// Callback functions when there is mouse interaction with the polygon
-// var clickedPolygon = false;
-// var selectedPointIndex = null;
-
-// var pointCallBack = function(type, event, index) {
-//   if (type === 'mousedown') {
-//     if (event.nativeEvent.shiftKey === true) {
-//       polygon.remPoint(index);
-//     }
-//     else {
-//       selectedPointIndex = index;
-//     }
-//   }
-//   clickedPolygon = true;
-// };
-
-// var lineCallBack = function(type, event, index) {
-//   if (type === 'mousedown') {
-//     if (event.nativeEvent.ctrlKey === true) {
-//       polygon.splitLine(index);
-//     }
-//   }
-//   clickedPolygon = true;
-// }
-
-// // Create the polygon
-// var polygon = new ROS2D.PolygonMarker({
-//   lineColor : createjs.Graphics.getRGB(100, 100, 255,0),
-//   pointCallBack : pointCallBack,
-//   // lineCallBack : lineCallBack,
-//   lineSize : 0.2,
-//   pointSize : 0.5
-// });
-
-// // Add the polygon to the viewer
-// console.log(polygon);
-// gridClient.rootObject.addChild(polygon);
-
-// // Event listeners for mouse interaction with the stage
-// viewer.scene.mouseMoveOutside = false; // doesn't seem to work
-
-// viewer.scene.addEventListener('stagemousemove', function(event) {
-//   // Move point when it's dragged
-//   if (selectedPointIndex !== null) {
-//     var pos = viewer.scene.globalToRos(event.stageX, event.stageY);
-//     polygon.movePoint(selectedPointIndex, pos);
-//   }
-// });
-
-// viewer.scene.addEventListener('stagemouseup', function(event) {
-//   // Add point when not clicked on the polygon
-//   if (selectedPointIndex !== null) {
-//     selectedPointIndex = null;
-//   }
-//   else if (viewer.scene.mouseInBounds === true && clickedPolygon === false) {
-//     var pos = viewer.scene.globalToRos(event.stageX, event.stageY);
-//     var pospix = {'x' : event.stageX, 'y' : Math.ceil(event.stageY)}; //Why is Y float | ceil is not for truncating!          
-//     polygon.remPoint(0);
-//     polygon.addPoint(pos);//SLOW just draw points
-//     console.log(pospix);
-//     document.getElementById("x").innerHTML = (pos.x).toFixed(2);
-//     document.getElementById("y").innerHTML = (pos.y).toFixed(2);
-//   }
-//   clickedPolygon = false;
-// });
 
 
 // create initial Pose Topic and msg
@@ -491,14 +429,7 @@ const createFunc = function (handlerToCall, discriminator, robotMarker,OperRatin
       console.log("nav work")
       robotMarker.x = pose.pose.pose.position.x;
       robotMarker.y = -pose.pose.pose.position.y;
-      // querternion to theta
-      // let quaZ = pose.pose.pose.orientation.z;
-      // let degreeZ = 0;
-      // if( quaZ >= 0 ) {
-      //     degreeZ = quaZ / 1 * 180
-      // } else {
-      //     degreeZ = (-quaZ) / 1 * 180 + 180
-      // };
+
       let orientationQuerter=pose.pose.pose.orientation
       var q0 = orientationQuerter.w;
       var q1 = orientationQuerter.x;
@@ -507,10 +438,6 @@ const createFunc = function (handlerToCall, discriminator, robotMarker,OperRatin
       degree=-Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - 2 * (q2 * q2 + q3 * q3)) * 180.0 / Math.PI
       robotMarker.rotation = degree;
       }
-
-      // turtlesim
-      // robotMarker.x = pose.x;
-      // robotMarker.y = -pose.y;
 
         // rootObject를 통해서 robotMaker에 Marker 넣어줌
         gridClient.rootObject.addChild(robotMarker);

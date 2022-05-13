@@ -72,35 +72,12 @@
     </label>
   </div>
   </div>
+  <p>Topic list:<h1 id="topic_list_length"></h1> <h1 id="topic_list"></h1></p>
+  <p>Node list:<h1 id="node_list_length"></h1> <h1 id="node_list"></h1></p>
   <p style="color:green">X:<span id="x"></span></p>
   <p style="color:blue">Y:<span id="y"></span></p>
   <script type="text/javascript" src="./script/roslisb.js"></script>
   <script type="text/javascript" src="./script/joystick.js"></script>
-  <script type="text/javascript">
-        var gotoClient = new ROSLIB.ActionClient({
-          ros : ros,
-          serverName : '/goto_position',
-          actionName : '/GotoPositionAction'
-        });
-
-      function move(position) {
-        console.log('Goto: ' + position);
-        var goal = new ROSLIB.Goal({
-          actionClient : gotoClient,
-          goalMessage : {
-            room_name : 'h',
-            pos_name : position
-          }
-        });
-
-        goal.on('result', function(result) {
-          console.log('finished');
-        });
-
-        goal.send();
-      }
-
- </script>
 
 
 </body>
